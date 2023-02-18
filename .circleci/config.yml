@@ -24,7 +24,7 @@ jobs:
           name: Run Docker container and execute tests
           command: |
             docker run --name my-react-app -d my-image/docker-react
-            docker exec my-react-app npm jest --watchAll --detectOpenHandles
+            docker exec my-react-app npm test --watchAll --detectOpenHandles
 
 workflows:
   version: 2
