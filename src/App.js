@@ -15,7 +15,7 @@ function App() {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Jesus is a winner!
+          Learn React
         </a>
       </header>
     </div>
