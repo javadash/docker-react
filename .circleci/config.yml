@@ -23,7 +23,7 @@ jobs:
       - run:
           name: Run Docker container and execute tests
           command: |
-            docker run --name my-react-app -d -e CI=true my-image/docker-react npm test
+            docker run --name my-react-app -e CI=true my-image/docker-react npm run test
 
 workflows:
   version: 2
