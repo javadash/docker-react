@@ -39,6 +39,5 @@ workflows:
             branches:
               only:
                 - master
-          label: version-<<pipeline.number>>
           requires:
             - build-and-test
