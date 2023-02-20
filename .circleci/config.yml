@@ -38,4 +38,4 @@ workflows:
           tag: '1.0'
       - deploy-to-beanstalk:
           requires:
-            - build-and-push-image
+            - aws-ecr/build-and-push-image
