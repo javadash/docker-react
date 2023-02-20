@@ -1,44 +1,50 @@
-# This config is equivalent to both the '.circleci/extended/orb-free.yml' and the base '.circleci/config.yml'
 version: 2.1
-
-# Orbs are reusable packages of CircleCI configuration that you may share across projects, enabling you to create encapsulated, parameterized commands, jobs, and executors that can be used across multiple projects.
-# See: https://circleci.com/docs/2.0/orb-intro/
 orbs:
-  eb: circleci/aws-elastic-beanstalk@2.0.1
-  node: circleci/node@5.1.0
+  aws-cli: circleci/aws-cli@3.1.4
+  aws-ecr: circleci/aws-ecr@8.2.1
+  aws-elastic-beanstalk: circleci/aws-elastic-beanstalk@2.0.1
 
-# Invoke jobs via workflows
-# See: https://circleci.com/docs/2.0/configuration-reference/#workflows
+
 jobs:
-  build-and-test:
-    docker:
-      - image: cimg/node:lts
+  build-and-push-image:
+    executor: aws-cli/default
     steps:
       - checkout
-      - setup_remote_docker:
-          docker_layer_caching: true
-      # - eb/setup
+      - setup_remote_docker
+      - aws-cli/setup # Install awscli
       - run:
           name: Build Docker image
           command: |
             docker build -t docker-react -f Dockerfile.dev .
+      - aws-ecr/build-and-push-image # Push Docker image to ECR
+          repo: docker-react # ECR repository name
+          tag: "1.0" # Docker image tag
+          dockerfile: Dockerfile.dev
+
+  deploy-to-beanstalk:
+    executor: aws-cli/default
+    steps:
+      - checkout
+      - setup_remote_docker
+      - aws-cli/setup # Install awscli
       - run:
-          name: Run Docker container and execute tests
+          name: Install ebcli # Install ebcli 
           command: |
-            docker run --name my-react-app -e CI=true my-image/docker-react npm run test
+            sudo apt-get update && sudo apt-get install python-pip python-dev build-essential 
+            sudo pip install --upgrade pip 
+            sudo pip install awsebcli --upgrade --ignore-installed six 
+            eb --version 
+      - run:
+          name: Deploy Docker image to Elastic Beanstalk # Deploy Docker image to Elastic Beanstalk 
+          command: |
+            eb init docker-react --region eu-west-1 --platform "Docker running on 64bit Amazon Linux" # Initialize EB application 
+            eb use docker-react-env # Set EB environment name 
+            eb deploy --staged # Deploy staged version 
 
 workflows:
-  version: 2
-  build-and-test:
+  build-and-deploy:
     jobs:
-      - build-and-test
-      - eb/deploy:
-          context: aws-credentials
-          application-name: docker-react
-          environment-name: Dockerreact-env
-          filters:
-            branches:
-              only:
-                - master
+      - build-and-push-image
+      - deploy-to-beanstalk:
           requires:
-            - build-and-test
+            - build-and-push-image
