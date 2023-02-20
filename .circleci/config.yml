@@ -2,49 +2,40 @@ version: 2.1
 orbs:
   aws-cli: circleci/aws-cli@3.1.4
   aws-ecr: circleci/aws-ecr@8.2.1
-  aws-elastic-beanstalk: circleci/aws-elastic-beanstalk@2.0.1
-
+  eb: circleci/aws-elastic-beanstalk@2.0.1
 
 jobs:
-  build-and-push-image:
-    executor: aws-cli/default
-    steps:
-      - checkout
-      - setup_remote_docker
-      - aws-cli/setup # Install awscli
-      - run:
-          name: Build Docker image
-          command: |
-            docker build -t docker-react -f Dockerfile.dev .
-      - aws-ecr/build-and-push-image # Push Docker image to ECR
-          repo: docker-react # ECR repository name
-          tag: "1.0" # Docker image tag
-          dockerfile: Dockerfile.dev
-
   deploy-to-beanstalk:
     executor: aws-cli/default
     steps:
       - checkout
-      - setup_remote_docker
-      - aws-cli/setup # Install awscli
-      - run:
-          name: Install ebcli # Install ebcli 
-          command: |
-            sudo apt-get update && sudo apt-get install python-pip python-dev build-essential 
-            sudo pip install --upgrade pip 
-            sudo pip install awsebcli --upgrade --ignore-installed six 
-            eb --version 
+      - eb/setup
       - run:
           name: Deploy Docker image to Elastic Beanstalk # Deploy Docker image to Elastic Beanstalk 
           command: |
             eb init docker-react --region eu-west-1 --platform "Docker running on 64bit Amazon Linux" # Initialize EB application 
             eb use docker-react-env # Set EB environment name 
-            eb deploy --staged # Deploy staged version 
+            eb deploy docker-react-env
+            ed status
 
 workflows:
-  build-and-deploy:
+  build_and_push_image:
     jobs:
-      - build-and-push-image
+      - aws-ecr/build-and-push-image:
+          aws-cli-version: latest
+          context: aws-credentials
+          create-repo: true
+          dockerfile: Dockerfile.dev
+          executor: aws-ecr/default
+          extra-build-args: '--compress'
+          no-output-timeout: 20m
+          path: ../
+          platform: linux/amd64
+          public-registry: false
+          push-image: true
+          repo: react-repo
+          source-profile: sourceProfileName
+          tag: '1.0'
       - deploy-to-beanstalk:
           requires:
             - build-and-push-image
