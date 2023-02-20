@@ -29,7 +29,6 @@ workflows:
           executor: aws-ecr/default
           extra-build-args: '--compress'
           no-output-timeout: 20m
-          path: ../
           platform: linux/amd64
           public-registry: false
           push-image: true
