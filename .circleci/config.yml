@@ -14,8 +14,8 @@ jobs:
       - run:
           name: Deploy Docker image to Elastic Beanstalk # Deploy Docker image to Elastic Beanstalk 
           command: |
-            eb init --platform docker --region eu-west-1 --repository react-repo:1.0
-            eb use docker-react-env # Set EB environment name 
+            eb init --platform docker --region eu-west-1 --repository react-repo
+            eb use docker-react-env
             eb deploy docker-react-env
             eb status
 
