@@ -7,16 +7,17 @@ orbs:
 jobs:
   deploy-to-beanstalk:
     executor: aws-cli/default
+    context: aws-creds
     steps:
       - checkout
       - eb/setup
       - run:
           name: Deploy Docker image to Elastic Beanstalk # Deploy Docker image to Elastic Beanstalk 
           command: |
-            eb init docker-react --region eu-west-1 --platform "Docker running on 64bit Amazon Linux" # Initialize EB application 
+            eb init --platform docker --region eu-west-1 --repository react-repo:1.0
             eb use docker-react-env # Set EB environment name 
             eb deploy docker-react-env
-            ed status
+            eb status
 
 workflows:
   build_and_push_image:
