@@ -10,14 +10,21 @@ jobs:
     context: aws-creds
     steps:
       - checkout
-      - eb/setup
+      - setup_remote_docker
+      - aws-cli/setup # Install awscli
+      - run:
+          name: Install ebcli # Install ebcli 
+          command: |
+            sudo apt-get update && sudo apt-get install python-pip python-dev build-essential 
+            sudo pip install --upgrade pip 
+            sudo pip install awsebcli --upgrade --ignore-installed six 
+            eb --version
       - run:
           name: Deploy Docker image to Elastic Beanstalk # Deploy Docker image to Elastic Beanstalk 
           command: |
-            eb init --platform docker --region eu-west-1 --repository react-repo
-            eb use docker-react-env
-            eb deploy docker-react-env
-            eb status
+            eb init --platform docker --region '${AWS_REGION}' --repository docker-react --workspace .
+            eb use my-react-app-env # Set EB environment name 
+            eb deploy --staged # Deploy staged version 
 
 workflows:
   build_and_push_image:
