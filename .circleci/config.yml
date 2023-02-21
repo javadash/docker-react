@@ -7,24 +7,23 @@ orbs:
 jobs:
   deploy-to-beanstalk:
     executor: aws-cli/default
-    context: aws-creds
     steps:
       - checkout
       - setup_remote_docker
       - aws-cli/setup # Install awscli
       - run:
-          name: Install ebcli # Install ebcli 
+          name: Install ebcli # Install ebcli
           command: |
             sudo apt-get update && sudo apt-get install python-pip python-dev build-essential 
             sudo pip install --upgrade pip 
             sudo pip install awsebcli --upgrade --ignore-installed six 
             eb --version
       - run:
-          name: Deploy Docker image to Elastic Beanstalk # Deploy Docker image to Elastic Beanstalk 
+          name: Deploy Docker image to Elastic Beanstalk # Deploy Docker image to Elastic Beanstalk
           command: |
             eb init --platform docker --region '${AWS_REGION}' --repository docker-react --workspace .
             eb use my-react-app-env # Set EB environment name 
-            eb deploy --staged # Deploy staged version 
+            eb deploy --staged # Deploy staged version
 
 workflows:
   build_and_push_image:
@@ -35,14 +34,15 @@ workflows:
           create-repo: true
           dockerfile: Dockerfile.dev
           executor: aws-ecr/default
-          extra-build-args: '--compress'
+          extra-build-args: "--compress"
           no-output-timeout: 20m
           platform: linux/amd64
           public-registry: false
           push-image: true
           repo: react-repo
           source-profile: sourceProfileName
-          tag: '1.0'
+          tag: "1.0"
       - deploy-to-beanstalk:
+          context: aws-creds
           requires:
             - aws-ecr/build-and-push-image
